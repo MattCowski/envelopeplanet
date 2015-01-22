@@ -36,6 +36,10 @@ angular.module 'angular', [
       .when '/',
         templateUrl: "main/home.html"
         controller: "HomeCtrl"
+      .when '/login',
+        templateUrl: "main/auth.html"
+        controller: "LoginCtrl"
+        controllerAs: 'login'
 
       .otherwise
         redirectTo: '/'
@@ -203,6 +207,50 @@ angular.module 'angular', [
 
         defer.promise
     AllMessages
+
+  .controller 'LoginCtrl', (Requests, $http, $scope, Auth, $location, ENVIROMENT) ->    
+    $scope.auth = Auth
+    @authRequestCode = (phone) =>
+      Requests.$set(phone, {uid: phone, phone: phone})
+    @authWithPhone = (phone, code) =>
+      $http.get(ENVIROMENT+"api/twilio/fbtoken?phone="+phone+"&code="+code)
+      .error (error) ->
+        console.log error
+      .success (token) ->
+        Auth.$authWithCustomToken(token).then (authData) ->
+          console.log authData
+          Auth.createProfile(authData)
+        .catch (error) ->
+          console.log error
+        
+        
+    # $location.path '/' if $scope.user
+    # @email = "user@email.com"
+    # @password = "password"
+
+    @createUser = () =>
+      Auth.$createUser(@email, @password)
+      .then () =>
+        console.log("User created successfully!")
+        @authWithPassword()
+      , (error) =>
+        @error = error.toString()
+
+
+    @authWithPassword = =>
+      Auth.$authWithPassword {email: @email, password: @password}
+      .then (authData) =>
+        console.log("Logged in as:", authData.uid)
+
+        Auth.createProfile(authData)
+        # $location.path "/"
+      .catch (error)=>
+        console.error("Error: ", error)
+        if error.code is "INVALID_USER"
+          @createUser()
+        else
+          @error = error.toString()
+    return
 
 
   .controller "HomeCtrl", ($popover, Auth, $scope, $routeParams, Profile, $firebase, FIREBASE_URL) ->
