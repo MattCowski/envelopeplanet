@@ -40,6 +40,9 @@ angular.module 'angular', [
         templateUrl: "main/auth.html"
         controller: "LoginCtrl"
         controllerAs: 'login'
+      .when '/profile/:userId',
+        templateUrl: "main/profile.html"
+        controller: "ProfileCtrl"
 
       .otherwise
         redirectTo: '/'
@@ -69,17 +72,8 @@ angular.module 'angular', [
     $firebase(ref.child("claim"))
 
   .factory "Auth", ($modal, Requests, Claim, $firebase, FIREBASE_URL, $firebaseAuth, $rootScope, $timeout, $location) ->
-    ref = new Firebase(FIREBASE_URL)
-    auth = $firebaseAuth(ref)
-
     Auth =
       user: null
-      $unauth: auth.$unauth
-      $onAuth: auth.$onAuth
-      $authWithCustomToken: auth.$authWithCustomToken
-      $authWithPassword: auth.$authWithPassword
-      $createUser: auth.$createUser
-      
       createProfile: (user) ->
         profileData =
           # email: user[user.provider].email or ''
@@ -100,7 +94,10 @@ angular.module 'angular', [
       confirmPhone: (code, phone) ->
         Claim.$set(phone, {uid: $rootScope.user.uid, phone: phone, code: code}) unless !code?
 
-    auth.$onAuth (user) ->
+    ref = new Firebase(FIREBASE_URL)
+    angular.extend(Auth, $firebaseAuth(ref))
+
+    Auth.$onAuth (user) ->
       loginModal = $modal({template: 'main/modalLogin.html', show: false})
       if user
         Auth.user = {}
@@ -254,6 +251,7 @@ angular.module 'angular', [
 
 
   .controller "HomeCtrl", ($popover, Auth, $scope, $routeParams, Profile, $firebase, FIREBASE_URL) ->
+    $scope.profile = Profile(Auth.user.uid).get()
     return
   .controller "ProfileCtrl", ($popover, Auth, $scope, $routeParams, Profile, $firebase, FIREBASE_URL) ->
     uid = $routeParams.userId
