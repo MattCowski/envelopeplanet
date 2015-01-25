@@ -40,6 +40,10 @@ angular.module 'angular', [
         templateUrl: "main/auth.html"
         controller: "LoginCtrl"
         controllerAs: 'login'
+      .when '/request/:requestId',
+        templateUrl: "main/request.html"
+        controller: "HomeCtrl"
+
       .when '/profile/:userId',
         templateUrl: "main/profile.html"
         controller: "ProfileCtrl"
@@ -171,6 +175,47 @@ angular.module 'angular', [
     profile
 
 
+  .directive "messages", ($modal, Messages, $routeParams, Auth, $firebase, $timeout, $rootScope, $alert, $location) ->
+    restrict: "E"
+    templateUrl: 'main/messages.html'
+    controller: ($scope)->
+      $scope.newMessage = {}
+      $scope.messages = {}
+      $scope.sending = false
+
+      loginModal = $modal({template: 'main/modalLogin.html', show: false})
+
+      console.log $routeParams.requestId
+
+      Auth.$onAuth (user) ->
+        if user
+          loginModal.$promise.then(loginModal.hide)
+          $scope.messages = Messages($routeParams.requestId).get()
+          
+        $scope.addMessage = (newMessage) ->
+          if !Auth.user
+            loginModal.$promise.then(loginModal.show)
+          else
+            return  unless newMessage.text.trim().length and $scope.sending is false
+            newMessage.sent = false
+            newMessage.type = 'web' # determine from uid
+            newMessage.timestamp = Firebase.ServerValue.TIMESTAMP
+            newMessage.from = user.uid #change to sender
+            # $scope.messages.$add(newMessage).then () ->
+            Messages($routeParams.requestId).create(newMessage).then ->
+              $scope.sending = true
+              $timeout ->
+                $scope.sending = false
+              , 5000
+              $scope.newMessage = {}
+
+      return
+    link: (scope, element, attrs, ctrl) ->
+      scope.toggle = (index) ->
+        console.log index
+      return
+
+
   .factory "Messages", (FIREBASE_URL, $firebase, $q) ->
     ref = new Firebase(FIREBASE_URL)
     # messages = $firebase(ref.child('messages').child(senderId)).$asArray()
@@ -187,24 +232,7 @@ angular.module 'angular', [
       # comments: (postId) ->
       #   $firebase(ref.child('comments').child(postId)).$asArray()
 
-  .factory "AllMessages", (FIREBASE_URL, Messages, $firebase, $q) ->
-    ref = new Firebase(FIREBASE_URL)
-    AllMessages =
-      aggregate: (userId) ->
-        defer = $q.defer()
-        $firebase(ref.child("user_rooms").child(userId)).$asArray().$loaded().then (data) ->
-          messages = {}
-          i = 0
-          while i < data.length
-            senderId = data[i].$id 
-            messages[senderId] = Messages(senderId).get()
-            i++
-          defer.resolve messages
-          return
-
-        defer.promise
-    AllMessages
-
+  
   .controller 'LoginCtrl', (Requests, $http, $scope, Auth, $location, ENVIROMENT) ->    
     $scope.auth = Auth
     @authRequestCode = (phone) =>
@@ -251,7 +279,7 @@ angular.module 'angular', [
 
 
   .controller "HomeCtrl", ($popover, Auth, $scope, $routeParams, Profile, $firebase, FIREBASE_URL) ->
-    $scope.profile = Profile(Auth.user.uid).get()
+    # $scope.profile = Profile(Auth.user.uid).get()
     return
   .controller "ProfileCtrl", ($popover, Auth, $scope, $routeParams, Profile, $firebase, FIREBASE_URL) ->
     uid = $routeParams.userId

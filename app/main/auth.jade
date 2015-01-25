@@ -2,16 +2,6 @@ span(ng-show="user")
   | Hello {{user.name}} {{user.displayName}} | {{user.uid}} 
   a(ng-click="auth.$unauth()") Logout
 
-//- span(ng-hide="user") 
-//- span
-//-   input(type="email", ng-model="login.email")
-//-   input(type="password", ng-model="login.password")
-//-   button.btn.btn-primary(ng-click="login.authWithPassword()") login
-//-   button.btn.btn-primary(ng-click="login.createUser()") create
-//-   a(ng-click="auth.$authAnonymously()") Login anonymous
-  //- a(href="#", ng-click="auth.$login('twitter')") Login twitter
-
-
 .auth-forms(ng-show="!auth.user.uid")
   h2 Sign up with phone
   code A phone confirmation will be sent via SMS text message. Alternatively, you may sign up with email below.
@@ -35,12 +25,3 @@ span(ng-show="user")
     input.form-control(type='password', ng-model='login.password', placeholder='Password')
     br
     input.btn.btn-primary(type='submit', value='Log in / Register')
-//- .auth-forms
-//-   h2 Register
-//-   form(ng-submit='register()')
-//-     p.text-danger(ng-show='error') {{ error }}
-//-     input.form-control(type='email', ng-model='user.email', placeholder='Email')
-//-     br
-//-     input.form-control(type='password', ng-model='user.password', placeholder='Password')
-//-     br
-//-     input.btn.btn-primary(type='submit', value='Register')
