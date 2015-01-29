@@ -175,10 +175,29 @@ angular.module 'angular', [
     profile
 
 
-  .directive "messages", ($modal, Messages, $routeParams, Auth, $firebase, $timeout, $rootScope, $alert, $location) ->
+  .directive "messages", (FIREBASE_URL, $modal, Messages, $routeParams, Auth, $firebase, $timeout, $rootScope, $alert, $location) ->
     restrict: "E"
     templateUrl: 'main/messages.html'
     controller: ($scope)->
+      loadProject = ->
+        ref = new Firebase(FIREBASE_URL+"/projects").child($routeParams.requestId)
+        $scope.project = $firebase(ref).$asObject()
+        $scope.cartItems = $firebase(ref.child('cartItems')).$asObject()
+        $scope.cartItems.$loaded().then (cartItems) ->
+          unless cartItems.labor
+            angular.extend($scope.cartItems, $rootScope.ProjectExample)
+
+      if $routeParams.requestId is "new"
+        ref = new Firebase(FIREBASE_URL+"/projects")
+        $firebase(ref).$push().then (ref) ->
+          search = $location.search()
+          $location.url('/request/'+ref.key())
+          $location.replace()
+          $location.search(search)
+          loadProject()
+      else
+        loadProject()
+
       $scope.newMessage = {}
       $scope.messages = {}
       $scope.sending = false

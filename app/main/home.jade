@@ -1,2 +1,5 @@
 h1 welcome to envelopeplanet
-a.btn.btn-default(href="#/request/12345") Start chat
+.input-group.input-group-lg
+  span.input-group-addon(bs-tooltip="'What do you need? What is your question", container="body") Your request/question:
+  input.form-control(type="text", ng-model="request", placeholder="What is the price for # envelopes?")
+a.btn.btn-default(href="#/request/new") Start chat
